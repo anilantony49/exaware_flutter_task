@@ -4,23 +4,22 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
-import 'signup_screen.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class SignupScreen extends StatefulWidget {
+  const SignupScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _SignupScreenState extends State<SignupScreen> {
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isAdmin = false;
   bool _isLoading = false;
 
   void _submit() async {
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+    if (_nameController.text.isEmpty || _emailController.text.isEmpty || _passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill in all fields')),
       );
@@ -28,16 +27,21 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     setState(() => _isLoading = true);
-    final success = await Provider.of<AuthProvider>(context, listen: false).login(
+    final success = await Provider.of<AuthProvider>(context, listen: false).signup(
+      _nameController.text,
       _emailController.text,
       _passwordController.text,
-      isAdmin: _isAdmin,
     );
     if (mounted) setState(() => _isLoading = false);
 
-    if (!success && mounted) {
+    if (success && mounted) {
+      Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login failed. Check your credentials.')),
+        const SnackBar(content: Text('Account created successfully! Please login.')),
+      );
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Signup failed.')),
       );
     }
   }
@@ -59,25 +63,14 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                IconButton(
+                  icon: const Icon(LucideIcons.arrowLeft, color: AppTheme.primaryColor),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
                 const SizedBox(height: 20),
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      LucideIcons.calendarCheck,
-                      size: 48,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                ).animate().scale(delay: 200.ms, duration: 400.ms, curve: Curves.backOut),
-                const SizedBox(height: 32),
                 const Center(
                   child: Text(
-                    'Welcome Back',
+                    'Create Account',
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -88,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 8),
                 const Center(
                   child: Text(
-                    'Login to manage your events',
+                    'Join EventHub to discover amazing events',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.grey,
@@ -103,6 +96,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     padding: const EdgeInsets.all(24.0),
                     child: Column(
                       children: [
+                        TextField(
+                          controller: _nameController,
+                          decoration: const InputDecoration(
+                            hintText: 'Full Name',
+                            prefixIcon: Icon(LucideIcons.user, size: 20),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
                         TextField(
                           controller: _emailController,
                           decoration: const InputDecoration(
@@ -120,47 +121,28 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           obscureText: true,
                         ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Checkbox(
-                              value: _isAdmin,
-                              activeColor: AppTheme.primaryColor,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              onChanged: (val) => setState(() => _isAdmin = val!),
-                            ),
-                            const Text(
-                              'Login as Admin',
-                              style: TextStyle(fontWeight: FontWeight.w500),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 32),
                         _isLoading 
                           ? const CircularProgressIndicator() 
                           : ElevatedButton(
                               onPressed: _submit, 
-                              child: Text(_isAdmin ? 'Admin Login' : 'Login'),
+                              child: const Text('Create Account'),
                             ),
                       ],
                     ),
                   ),
-                ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1, end: 0),
-                const SizedBox(height: 24),
+                ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1, end: 0),
+                const SizedBox(height: 32),
                 Center(
                   child: TextButton(
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const SignupScreen())
-                    ), 
+                    onPressed: () => Navigator.of(context).pop(), 
                     child: RichText(
                       text: TextSpan(
                         style: const TextStyle(color: Colors.grey, fontSize: 14),
                         children: [
-                          const TextSpan(text: 'Don\'t have an account? '),
+                          const TextSpan(text: 'Already have an account? '),
                           TextSpan(
-                            text: 'Sign up',
+                            text: 'Login',
                             style: TextStyle(
                               color: AppTheme.primaryColor,
                               fontWeight: FontWeight.bold,
@@ -177,5 +159,31 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+}
+                          color: AppTheme.primaryAccent,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ).animate().fadeIn(delay: 1000.ms),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInputWrapper({required Widget child, required int delay}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.border, width: 1),
+      ),
+      child: child,
+    ).animate().fadeIn(delay: delay.ms).slideY(begin: 0.1, end: 0);
   }
 }
